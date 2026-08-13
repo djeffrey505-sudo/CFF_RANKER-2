@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CFF Ranker</title>
+<style>
+  :root{
+    --bg:#0b0e13;
+    --panel:#121720;
+    --panel2:#171d28;
+    --line:#283140;
+    --text:#f6f7fb;
+    --muted:#9ba7b7;
+    --good:#61d095;
+    --bad:#ff7a7a;
+    --accent:#f4c542;
+    --blue:#69a7ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px}
+  .topbar{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+  h1{font-size:28px;margin:0}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:4px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  button,.pill{
+    background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;
+    padding:9px 12px;font-weight:700;cursor:pointer
+  }
+  button:hover,.pill:hover{border-color:#42506a}
+  .danger{color:#ffd4d4}
+  .controls{
+    display:grid;grid-template-columns:1.4fr auto auto;gap:10px;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px
+  }
+  input,select{
+    width:100%;background:#0f141c;color:var(--text);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:14px
+  }
+  .filters{display:flex;gap:7px;flex-wrap:wrap}
+  .filter.active{background:var(--accent);color:#181818;border-color:var(--accent)}
+  .stats{color:var(--muted);font-size:13px;display:flex;align-items:center;justify-content:flex-end}
+  .board{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .header,.row{
+    display:grid;
+    grid-template-columns:42px 70px minmax(210px,2fr) 70px minmax(110px,1fr) 92px 92px 90px 95px 90px;
+    align-items:center;
+  }
+  .header{background:#0f141c;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:0 10px;border-bottom:1px solid var(--line)}
+  .header > div{padding:11px 7px}
+  .row{padding:0 10px;border-bottom:1px solid #202734;background:var(--panel)}
+  .row:last-child{border-bottom:0}
+  .row.dragging{opacity:.45}
+  .row.drop-before{box-shadow:inset 0 3px 0 var(--accent)}
+  .cell{padding:11px 7px;min-width:0}
+  .handle{font-size:20px;color:#7f8ba0;cursor:grab;user-select:none;text-align:center;touch-action:none}
+  .rank{font-weight:900;font-size:16px}
+  .player{font-weight:800}
+  .school{color:var(--muted);font-size:12px;margin-top:3px}
+  .pos{font-weight:900}
+  .num{font-variant-numeric:tabular-nums}
+  .value.good{color:var(--good);font-weight:900}
+  .value.bad{color:var(--bad);font-weight:900}
+  .value.neutral{color:var(--muted);font-weight:900}
+  .tagbtn{width:74px;padding:7px 8px;font-size:12px}
+  .tierselect{padding:7px 8px}
+  .tier-divider{
+    padding:8px 16px;background:#0f141c;color:var(--accent);font-weight:900;font-size:12px;
+    border-bottom:1px solid var(--line);letter-spacing:.06em
+  }
+  .empty{padding:28px;text-align:center;color:var(--muted)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
+  @media(max-width:900px){
+    .controls{grid-template-columns:1fr}
+    .stats{justify-content:flex-start}
+    .board{overflow-x:auto}
+    .header,.row{min-width:980px}
+    .wrap{padding:10px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>CFF Ranker</h1>
+      <div class="subtitle">Build your personal college fantasy football board by dragging players into your order.</div>
+    </div>
+    <div class="actions">
+      <button id="resetBtn">Reset to Froton</button>
+      <button id="exportBtn">Export Rankings</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input id="search" placeholder="Search player or school…" />
+    <div class="filters" id="filters"></div>
+    <div class="stats"><span id="count"></span></div>
+  </div>
+
+  <div class="board">
+    <div class="header">
+      <div></div>
+      <div>My Rank</div>
+      <div>Player</div>
+      <div>Pos</div>
+      <div>School</div>
+      <div>Froton</div>
+      <div>Yahoo ADP</div>
+      <div>My Value</div>
+      <div>Target</div>
+      <div>Tier</div>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+  <div class="legend">
+    <span><b>My Value</b> = Yahoo ADP − My Rank</span>
+    <span>Positive = potential value</span>
+    <span>Negative = you rank the player later than the market</span>
+    <span>Your changes save automatically on this device.</span>
+  </div>
+</div>
+
+<script>
+const STARTERS = [
+  {id:1,name:"Jeremiah Smith",school:"Ohio State",pos:"WR",froton:1,adp:2.4,tier:1,tag:""},
+  {id:2,name:"Ryan Williams",school:"Alabama",pos:"WR",froton:2,adp:4.9,tier:1,tag:""},
+  {id:3,name:"LaNorris Sellers",school:"South Carolina",pos:"QB",froton:3,adp:5.8,tier:1,tag:""},
+  {id:4,name:"Nate Frazier",school:"Georgia",pos:"RB",froton:4,adp:8.3,tier:1,tag:""},
+  {id:5,name:"Arch Manning",school:"Texas",pos:"QB",froton:5,adp:6.7,tier:1,tag:""},
+  {id:6,name:"Jordan Marshall",school:"Michigan",pos:"RB",froton:6,adp:11.1,tier:2,tag:""},
+  {id:7,name:"Carnell Tate",school:"Ohio State",pos:"WR",froton:7,adp:13.6,tier:2,tag:""},
+  {id:8,name:"CJ Baxter",school:"Texas",pos:"RB",froton:8,adp:15.4,tier:2,tag:""},
+  {id:9,name:"DJ Lagway",school:"Florida",pos:"QB",froton:9,adp:12.8,tier:2,tag:""},
+  {id:10,name:"Bryant Wesco Jr.",school:"Clemson",pos:"WR",froton:10,adp:18.2,tier:2,tag:""},
+  {id:11,name:"Sam Leavitt",school:"Arizona State",pos:"QB",froton:11,adp:20.1,tier:3,tag:""},
+  {id:12,name:"Justice Haynes",school:"Michigan",pos:"RB",froton:12,adp:22.5,tier:3,tag:""},
+  {id:13,name:"Duce Robinson",school:"Florida State",pos:"WR",froton:13,adp:24.8,tier:3,tag:""},
+  {id:14,name:"Jadan Baugh",school:"Florida",pos:"RB",froton:14,adp:27.2,tier:3,tag:""},
+  {id:15,name:"Elijah Sarratt",school:"Indiana",pos:"WR",froton:15,adp:29.6,tier:3,tag:""},
+  {id:16,name:"Luke Hasz",school:"Ole Miss",pos:"TE",froton:16,adp:35.4,tier:4,tag:""},
+  {id:17,name:"Max Klare",school:"Ohio State",pos:"TE",froton:17,adp:38.2,tier:4,tag:""},
+  {id:18,name:"Gunner Stockton",school:"Georgia",pos:"QB",froton:18,adp:31.7,tier:4,tag:""}
+];
+
+const STORAGE_KEY = "cff-ranker-v1";
+let state = {players:[], filter:"ALL", search:""};
+
+function fresh(){
+  return STARTERS.map(x=>({...x}));
+}
+function load(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    state.players = saved?.players?.length ? saved.players : fresh();
+  }catch(e){ state.players = fresh(); }
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({players:state.players}));
+}
+function myRank(playerId){
+  return state.players.findIndex(p=>p.id===playerId)+1;
+}
+function cycleTag(tag){
+  if(tag==="") return "🔥";
+  if(tag==="🔥") return "❄️";
+  return "";
+}
+function filtered(){
+  const q=state.search.trim().toLowerCase();
+  return state.players.filter(p=>{
+    const posOk = state.filter==="ALL" || p.pos===state.filter;
+    const qOk = !q || p.name.toLowerCase().includes(q) || p.school.toLowerCase().includes(q);
+    return posOk && qOk;
+  });
+}
+function renderFilters(){
+  const positions=["ALL","QB","RB","WR","TE"];
+  const el=document.getElementById("filters");
+  el.innerHTML="";
+  positions.forEach(pos=>{
+    const b=document.createElement("button");
+    b.className="filter"+(state.filter===pos?" active":"");
+    b.textContent=pos;
+    b.onclick=()=>{state.filter=pos;render();};
+    el.appendChild(b);
+  });
+}
+function valueClass(v){
+  if(v>=5) return "good";
+  if(v<=-5) return "bad";
+  return "neutral";
+}
+function render(){
+  renderFilters();
+  const data=filtered();
+  document.getElementById("count").textContent = `${data.length} players`;
+  const rows=document.getElementById("rows");
+  rows.innerHTML="";
+  let lastTier=null;
+
+  data.forEach(p=>{
+    if(p.tier!==lastTier){
+      const d=document.createElement("div");
+      d.className="tier-divider";
+      d.textContent=`TIER ${p.tier}`;
+      rows.appendChild(d);
+      lastTier=p.tier;
+    }
+
+    const r=document.createElement("div");
+    r.className="row";
+    r.draggable=true;
+    r.dataset.id=p.id;
+
+    const rank=myRank(p.id);
+    const val=(Number(p.adp)-rank);
+    const valText=(val>0?"+":"")+val.toFixed(1);
+
+    r.innerHTML=`
+      <div class="cell handle" title="Drag to reorder">≡</div>
+      <div class="cell rank">${rank}</div>
+      <div class="cell">
+        <div class="player">${p.name}</div>
+        <div class="school">${p.school}</div>
+      </div>
+      <div class="cell pos">${p.pos}</div>
+      <div class="cell">${p.school}</div>
+      <div class="cell num">${p.froton}</div>
+      <div class="cell num">${Number(p.adp).toFixed(1)}</div>
+      <div class="cell value ${valueClass(val)}">${valText}</div>
+      <div class="cell"><button class="tagbtn">${p.tag || "—"}</button></div>
+      <div class="cell">
+        <select class="tierselect">
+          ${[1,2,3,4,5,6,7,8].map(t=>`<option value="${t}" ${p.tier===t?"selected":""}>Tier ${t}</option>`).join("")}
+        </select>
+      </div>
+    `;
+
+    const handle=r.querySelector(".handle");
+    handle.addEventListener("pointerdown",(e)=>{
+      if(e.pointerType==="mouse") return;
+      e.preventDefault();
+      handle.setPointerCapture(e.pointerId);
+      r.classList.add("dragging");
+      let touchTargetId=p.id;
+
+      const move=(ev)=>{
+        const el=document.elementFromPoint(ev.clientX,ev.clientY);
+        const targetRow=el?.closest?.(".row");
+        document.querySelectorAll(".drop-before").forEach(x=>x.classList.remove("drop-before"));
+        if(targetRow && Number(targetRow.dataset.id)!==p.id){
+          targetRow.classList.add("drop-before");
+          touchTargetId=Number(targetRow.dataset.id);
+        }
+      };
+      const end=()=>{
+        r.classList.remove("dragging");
+        document.querySelectorAll(".drop-before").forEach(x=>x.classList.remove("drop-before"));
+        handle.removeEventListener("pointermove",move);
+        handle.removeEventListener("pointerup",end);
+        handle.removeEventListener("pointercancel",end);
+        if(touchTargetId!==p.id) reorder(p.id,touchTargetId);
+      };
+
+      handle.addEventListener("pointermove",move);
+      handle.addEventListener("pointerup",end);
+      handle.addEventListener("pointercancel",end);
+    });
+
+    const tagBtn=r.querySelector(".tagbtn");
+    tagBtn.onclick=(e)=>{
+      e.stopPropagation();
+      p.tag=cycleTag(p.tag);
+      save(); render();
+    };
+    const tierSelect=r.querySelector(".tierselect");
+    tierSelect.onchange=(e)=>{
+      p.tier=Number(e.target.value);
+      state.players.sort((a,b)=> a.tier-b.tier || myRank(a.id)-myRank(b.id));
+      save(); render();
+    };
+
+    r.addEventListener("dragstart",()=>{
+      r.classList.add("dragging");
+      window._dragId=p.id;
+    });
+    r.addEventListener("dragend",()=>{
+      r.classList.remove("dragging");
+      document.querySelectorAll(".drop-before").forEach(x=>x.classList.remove("drop-before"));
+    });
+    r.addEventListener("dragover",(e)=>{
+      e.preventDefault();
+      r.classList.add("drop-before");
+    });
+    r.addEventListener("dragleave",()=>r.classList.remove("drop-before"));
+    r.addEventListener("drop",(e)=>{
+      e.preventDefault();
+      r.classList.remove("drop-before");
+      reorder(window._dragId,p.id);
+    });
+
+    rows.appendChild(r);
+  });
+  if(!data.length){
+    rows.innerHTML='<div class="empty">No players match this filter.</div>';
+  }
+}
+
+function reorder(dragId, targetId){
+  if(dragId===targetId) return;
+  const from=state.players.findIndex(p=>p.id===dragId);
+  const to=state.players.findIndex(p=>p.id===targetId);
+  if(from<0 || to<0) return;
+  const [moved]=state.players.splice(from,1);
+  state.players.splice(to,0,moved);
+  save(); render();
+}
+
+document.getElementById("search").addEventListener("input",(e)=>{
+  state.search=e.target.value; render();
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset your personal rankings back to Froton order?")){
+    state.players=fresh(); save(); render();
+  }
+});
+document.getElementById("exportBtn").addEventListener("click",()=>{
+  const lines=["My Rank,Player,School,Pos,Froton Rank,Yahoo ADP,My Value,Target,Tier"];
+  state.players.forEach((p,i)=>{
+    const value=(Number(p.adp)-(i+1)).toFixed(1);
+    lines.push([i+1,`"${p.name}"`,`"${p.school}"`,p.pos,p.froton,p.adp,value,p.tag||"",p.tier].join(","));
+  });
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="cff-rankings.csv";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+
+load();
+render();
+</script>
+</body>
+</html>
