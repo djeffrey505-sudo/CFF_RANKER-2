@@ -93,6 +93,9 @@
       <div class="subtitle">Build your personal college fantasy football board by dragging players into your order.</div>
     </div>
     <div class="actions">
+      <button id="addBtn">+ Add Player</button>
+      <button id="importBtn">Import CSV</button>
+      <input id="csvInput" type="file" accept=".csv,text/csv" style="display:none" />
       <button id="resetBtn">Reset to Froton</button>
       <button id="exportBtn">Export Rankings</button>
     </div>
@@ -142,7 +145,63 @@ const SCHOOL_LOGOS = {
   "Arizona State":"https://a.espncdn.com/i/teamlogos/ncaa/500/9.png",
   "Florida State":"https://a.espncdn.com/i/teamlogos/ncaa/500/52.png",
   "Indiana":"https://a.espncdn.com/i/teamlogos/ncaa/500/84.png",
-  "Ole Miss":"https://a.espncdn.com/i/teamlogos/ncaa/500/145.png"
+  "Ole Miss":"https://a.espncdn.com/i/teamlogos/ncaa/500/145.png",
+  "Notre Dame":"https://a.espncdn.com/i/teamlogos/ncaa/500/87.png",
+  "Penn State":"https://a.espncdn.com/i/teamlogos/ncaa/500/213.png",
+  "Oregon":"https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png",
+  "USC":"https://a.espncdn.com/i/teamlogos/ncaa/500/30.png",
+  "UCLA":"https://a.espncdn.com/i/teamlogos/ncaa/500/26.png",
+  "Washington":"https://a.espncdn.com/i/teamlogos/ncaa/500/264.png",
+  "Wisconsin":"https://a.espncdn.com/i/teamlogos/ncaa/500/275.png",
+  "Iowa":"https://a.espncdn.com/i/teamlogos/ncaa/500/2294.png",
+  "Minnesota":"https://a.espncdn.com/i/teamlogos/ncaa/500/135.png",
+  "Nebraska":"https://a.espncdn.com/i/teamlogos/ncaa/500/158.png",
+  "Northwestern":"https://a.espncdn.com/i/teamlogos/ncaa/500/77.png",
+  "Illinois":"https://a.espncdn.com/i/teamlogos/ncaa/500/356.png",
+  "Purdue":"https://a.espncdn.com/i/teamlogos/ncaa/500/2509.png",
+  "Maryland":"https://a.espncdn.com/i/teamlogos/ncaa/500/120.png",
+  "Rutgers":"https://a.espncdn.com/i/teamlogos/ncaa/500/164.png",
+  "Michigan State":"https://a.espncdn.com/i/teamlogos/ncaa/500/127.png",
+  "Auburn":"https://a.espncdn.com/i/teamlogos/ncaa/500/2.png",
+  "Arkansas":"https://a.espncdn.com/i/teamlogos/ncaa/500/8.png",
+  "Kentucky":"https://a.espncdn.com/i/teamlogos/ncaa/500/96.png",
+  "LSU":"https://a.espncdn.com/i/teamlogos/ncaa/500/99.png",
+  "Mississippi State":"https://a.espncdn.com/i/teamlogos/ncaa/500/344.png",
+  "Missouri":"https://a.espncdn.com/i/teamlogos/ncaa/500/142.png",
+  "Oklahoma":"https://a.espncdn.com/i/teamlogos/ncaa/500/201.png",
+  "Tennessee":"https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png",
+  "Texas A&M":"https://a.espncdn.com/i/teamlogos/ncaa/500/245.png",
+  "Vanderbilt":"https://a.espncdn.com/i/teamlogos/ncaa/500/238.png",
+  "Arizona":"https://a.espncdn.com/i/teamlogos/ncaa/500/12.png",
+  "Baylor":"https://a.espncdn.com/i/teamlogos/ncaa/500/239.png",
+  "BYU":"https://a.espncdn.com/i/teamlogos/ncaa/500/252.png",
+  "Cincinnati":"https://a.espncdn.com/i/teamlogos/ncaa/500/2132.png",
+  "Colorado":"https://a.espncdn.com/i/teamlogos/ncaa/500/38.png",
+  "Houston":"https://a.espncdn.com/i/teamlogos/ncaa/500/248.png",
+  "Iowa State":"https://a.espncdn.com/i/teamlogos/ncaa/500/66.png",
+  "Kansas":"https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png",
+  "Kansas State":"https://a.espncdn.com/i/teamlogos/ncaa/500/2306.png",
+  "Oklahoma State":"https://a.espncdn.com/i/teamlogos/ncaa/500/197.png",
+  "TCU":"https://a.espncdn.com/i/teamlogos/ncaa/500/2628.png",
+  "Texas Tech":"https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png",
+  "UCF":"https://a.espncdn.com/i/teamlogos/ncaa/500/2116.png",
+  "Utah":"https://a.espncdn.com/i/teamlogos/ncaa/500/254.png",
+  "West Virginia":"https://a.espncdn.com/i/teamlogos/ncaa/500/277.png",
+  "Boston College":"https://a.espncdn.com/i/teamlogos/ncaa/500/103.png",
+  "California":"https://a.espncdn.com/i/teamlogos/ncaa/500/25.png",
+  "Duke":"https://a.espncdn.com/i/teamlogos/ncaa/500/150.png",
+  "Georgia Tech":"https://a.espncdn.com/i/teamlogos/ncaa/500/59.png",
+  "Louisville":"https://a.espncdn.com/i/teamlogos/ncaa/500/97.png",
+  "Miami":"https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png",
+  "NC State":"https://a.espncdn.com/i/teamlogos/ncaa/500/152.png",
+  "North Carolina":"https://a.espncdn.com/i/teamlogos/ncaa/500/153.png",
+  "Pittsburgh":"https://a.espncdn.com/i/teamlogos/ncaa/500/221.png",
+  "SMU":"https://a.espncdn.com/i/teamlogos/ncaa/500/2567.png",
+  "Stanford":"https://a.espncdn.com/i/teamlogos/ncaa/500/24.png",
+  "Syracuse":"https://a.espncdn.com/i/teamlogos/ncaa/500/183.png",
+  "Virginia":"https://a.espncdn.com/i/teamlogos/ncaa/500/258.png",
+  "Virginia Tech":"https://a.espncdn.com/i/teamlogos/ncaa/500/259.png",
+  "Wake Forest":"https://a.espncdn.com/i/teamlogos/ncaa/500/154.png"
 };
 function logoFor(school){
   return SCHOOL_LOGOS[school] || "";
@@ -170,12 +229,69 @@ const STARTERS = [
   {id:19,name:"Tre Shields",school:"Georgia",pos:"WR",froton:null,adp:null,tier:4,tag:"🔥"}
 ];
 
-const STORAGE_KEY = "cff-ranker-v2";
+const STORAGE_KEY = "cff-ranker-v3";
 let state = {players:[], filter:"ALL", search:""};
 
 function fresh(){
   return STARTERS.map(x=>({...x}));
 }
+
+function normalizeKey(name, school, pos){
+  return [name,school,pos].map(x=>(x||"").toString().trim().toLowerCase()).join("|");
+}
+function nextId(){
+  return state.players.reduce((m,p)=>Math.max(m,Number(p.id)||0),0)+1;
+}
+function parseCSV(text){
+  const rows=[];
+  let row=[], cell="", quoted=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(c === '"'){
+      if(quoted && n === '"'){ cell+='"'; i++; }
+      else quoted=!quoted;
+    } else if(c === ',' && !quoted){
+      row.push(cell); cell="";
+    } else if((c === '\n' || c === '\r') && !quoted){
+      if(c === '\r' && n === '\n') i++;
+      row.push(cell); cell="";
+      if(row.some(x=>x.trim()!=="")) rows.push(row);
+      row=[];
+    } else cell+=c;
+  }
+  row.push(cell);
+  if(row.some(x=>x.trim()!=="")) rows.push(row);
+  return rows;
+}
+function mergeImportedPlayers(items){
+  const existingByKey = new Map(state.players.map(p=>[normalizeKey(p.name,p.school,p.pos),p]));
+  items.forEach(item=>{
+    const key=normalizeKey(item.name,item.school,item.pos);
+    if(!item.name || !item.pos) return;
+    const ex=existingByKey.get(key);
+    if(ex){
+      ex.school=item.school || ex.school;
+      ex.pos=(item.pos||ex.pos).toUpperCase();
+      if(item.froton !== undefined) ex.froton=item.froton;
+      if(item.adp !== undefined) ex.adp=item.adp;
+    } else {
+      const p={
+        id:nextId(),
+        name:item.name.trim(),
+        school:(item.school||"").trim(),
+        pos:(item.pos||"").trim().toUpperCase(),
+        froton:item.froton ?? null,
+        adp:item.adp ?? null,
+        tier:8,
+        tag:""
+      };
+      state.players.push(p);
+      existingByKey.set(key,p);
+    }
+  });
+  save(); render();
+}
+
 function load(){
   try{
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -369,6 +485,52 @@ document.getElementById("exportBtn").addEventListener("click",()=>{
   const a=document.createElement("a");
   a.href=url;a.download="cff-rankings.csv";a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+
+
+document.getElementById("addBtn").addEventListener("click",()=>{
+  const name=prompt("Player name:");
+  if(!name) return;
+  const school=prompt("School:");
+  if(school===null) return;
+  const pos=(prompt("Position (QB, RB, WR, TE):")||"").toUpperCase().trim();
+  if(!["QB","RB","WR","TE"].includes(pos)){ alert("Please use QB, RB, WR, or TE."); return; }
+  const f=prompt("Froton rank (leave blank for NR):");
+  const a=prompt("Yahoo ADP (leave blank if unavailable):");
+  mergeImportedPlayers([{
+    name,school,pos,
+    froton:(f && !isNaN(Number(f))) ? Number(f) : null,
+    adp:(a && !isNaN(Number(a))) ? Number(a) : null
+  }]);
+});
+
+document.getElementById("importBtn").addEventListener("click",()=>{
+  document.getElementById("csvInput").click();
+});
+document.getElementById("csvInput").addEventListener("change",async(e)=>{
+  const file=e.target.files?.[0];
+  if(!file) return;
+  const text=await file.text();
+  const rows=parseCSV(text);
+  if(rows.length<2){ alert("CSV appears empty."); return; }
+  const headers=rows[0].map(h=>h.trim().toLowerCase().replace(/\s+/g,""));
+  const idx=(...names)=>names.map(n=>headers.indexOf(n)).find(i=>i>=0) ?? -1;
+  const ni=idx("player","name","playername");
+  const si=idx("school","team");
+  const pi=idx("pos","position");
+  const fi=idx("froton","frotonrank","rank");
+  const ai=idx("yahooadp","adp");
+  if(ni<0 || pi<0){ alert("CSV needs at least Player/Name and Pos/Position columns."); return; }
+  const items=rows.slice(1).map(r=>({
+    name:r[ni]||"",
+    school:si>=0?(r[si]||""):"",
+    pos:r[pi]||"",
+    froton:fi>=0 && r[fi] && r[fi].toUpperCase()!=="NR" && !isNaN(Number(r[fi])) ? Number(r[fi]) : null,
+    adp:ai>=0 && r[ai] && !isNaN(Number(r[ai])) ? Number(r[ai]) : null
+  }));
+  mergeImportedPlayers(items);
+  alert(`Imported/updated ${items.filter(x=>x.name&&x.pos).length} players. Your personal order and tags were preserved for matching players.`);
+  e.target.value="";
 });
 
 load();
