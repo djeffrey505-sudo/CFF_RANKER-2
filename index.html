@@ -58,6 +58,11 @@
   .rank{font-weight:900;font-size:16px}
   .player{font-weight:800}
   .school{color:var(--muted);font-size:12px;margin-top:3px}
+  .school-logo{
+    width:34px;height:34px;object-fit:contain;display:block;margin:auto;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))
+  }
+  .school-cell{display:flex;align-items:center;justify-content:center}
   .pos{font-weight:900}
   .num{font-variant-numeric:tabular-nums}
   .value.good{color:var(--good);font-weight:900}
@@ -124,6 +129,25 @@
 </div>
 
 <script>
+
+const SCHOOL_LOGOS = {
+  "Ohio State":"https://a.espncdn.com/i/teamlogos/ncaa/500/194.png",
+  "Alabama":"https://a.espncdn.com/i/teamlogos/ncaa/500/333.png",
+  "South Carolina":"https://a.espncdn.com/i/teamlogos/ncaa/500/2579.png",
+  "Georgia":"https://a.espncdn.com/i/teamlogos/ncaa/500/61.png",
+  "Texas":"https://a.espncdn.com/i/teamlogos/ncaa/500/251.png",
+  "Michigan":"https://a.espncdn.com/i/teamlogos/ncaa/500/130.png",
+  "Florida":"https://a.espncdn.com/i/teamlogos/ncaa/500/57.png",
+  "Clemson":"https://a.espncdn.com/i/teamlogos/ncaa/500/228.png",
+  "Arizona State":"https://a.espncdn.com/i/teamlogos/ncaa/500/9.png",
+  "Florida State":"https://a.espncdn.com/i/teamlogos/ncaa/500/52.png",
+  "Indiana":"https://a.espncdn.com/i/teamlogos/ncaa/500/84.png",
+  "Ole Miss":"https://a.espncdn.com/i/teamlogos/ncaa/500/145.png"
+};
+function logoFor(school){
+  return SCHOOL_LOGOS[school] || "";
+}
+
 const STARTERS = [
   {id:1,name:"Jeremiah Smith",school:"Ohio State",pos:"WR",froton:1,adp:2.4,tier:1,tag:""},
   {id:2,name:"Ryan Williams",school:"Alabama",pos:"WR",froton:2,adp:4.9,tier:1,tag:""},
@@ -142,10 +166,11 @@ const STARTERS = [
   {id:15,name:"Elijah Sarratt",school:"Indiana",pos:"WR",froton:15,adp:29.6,tier:3,tag:""},
   {id:16,name:"Luke Hasz",school:"Ole Miss",pos:"TE",froton:16,adp:35.4,tier:4,tag:""},
   {id:17,name:"Max Klare",school:"Ohio State",pos:"TE",froton:17,adp:38.2,tier:4,tag:""},
-  {id:18,name:"Gunner Stockton",school:"Georgia",pos:"QB",froton:18,adp:31.7,tier:4,tag:""}
+  {id:18,name:"Gunner Stockton",school:"Georgia",pos:"QB",froton:18,adp:31.7,tier:4,tag:""},
+  {id:19,name:"Tre Shields",school:"Georgia",pos:"WR",froton:null,adp:null,tier:4,tag:"🔥"}
 ];
 
-const STORAGE_KEY = "cff-ranker-v1";
+const STORAGE_KEY = "cff-ranker-v2";
 let state = {players:[], filter:"ALL", search:""};
 
 function fresh(){
@@ -216,8 +241,9 @@ function render(){
     r.dataset.id=p.id;
 
     const rank=myRank(p.id);
-    const val=(Number(p.adp)-rank);
-    const valText=(val>0?"+":"")+val.toFixed(1);
+    const hasAdp = p.adp !== null && p.adp !== undefined && p.adp !== "";
+    const val = hasAdp ? (Number(p.adp)-rank) : null;
+    const valText = val === null ? "—" : (val>0?"+":"")+val.toFixed(1);
 
     r.innerHTML=`
       <div class="cell handle" title="Drag to reorder">≡</div>
@@ -227,10 +253,14 @@ function render(){
         <div class="school">${p.school}</div>
       </div>
       <div class="cell pos">${p.pos}</div>
-      <div class="cell">${p.school}</div>
-      <div class="cell num">${p.froton}</div>
-      <div class="cell num">${Number(p.adp).toFixed(1)}</div>
-      <div class="cell value ${valueClass(val)}">${valText}</div>
+      <div class="cell school-cell">
+        ${logoFor(p.school)
+          ? `<img class="school-logo" src="${logoFor(p.school)}" alt="${p.school}" title="${p.school}" />`
+          : `<span title="${p.school}">—</span>`}
+      </div>
+      <div class="cell num">${p.froton ?? "NR"}</div>
+      <div class="cell num">${hasAdp ? Number(p.adp).toFixed(1) : "—"}</div>
+      <div class="cell value ${val===null ? "neutral" : valueClass(val)}">${valText}</div>
       <div class="cell"><button class="tagbtn">${p.tag || "—"}</button></div>
       <div class="cell">
         <select class="tierselect">
@@ -330,8 +360,9 @@ document.getElementById("resetBtn").addEventListener("click",()=>{
 document.getElementById("exportBtn").addEventListener("click",()=>{
   const lines=["My Rank,Player,School,Pos,Froton Rank,Yahoo ADP,My Value,Target,Tier"];
   state.players.forEach((p,i)=>{
-    const value=(Number(p.adp)-(i+1)).toFixed(1);
-    lines.push([i+1,`"${p.name}"`,`"${p.school}"`,p.pos,p.froton,p.adp,value,p.tag||"",p.tier].join(","));
+    const hasAdp = p.adp !== null && p.adp !== undefined && p.adp !== "";
+    const value = hasAdp ? (Number(p.adp)-(i+1)).toFixed(1) : "";
+    lines.push([i+1,`"${p.name}"`,`"${p.school}"`,p.pos,p.froton ?? "NR",hasAdp ? p.adp : "",value,p.tag||"",p.tier].join(","));
   });
   const blob=new Blob([lines.join("\n")],{type:"text/csv"});
   const url=URL.createObjectURL(blob);
